@@ -5,6 +5,7 @@ readonly PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly OUTPUT_DIR="${PROJECT_ROOT}/output"
 readonly BUILD_DIR="${PROJECT_ROOT}/build"
 readonly DEFAULT_ASCEND_ROOT="/usr/local/Ascend/ascend-toolkit"
+readonly DEFAULT_ASCEND_DRIVER_PATH="/usr/local/Ascend/driver"
 
 export VERSION="${VERSION:-1.0.0}"
 
@@ -309,6 +310,34 @@ function resolve_ascend_home()
     export ASCEND_HOME_PATH="$candidate"
 }
 
+# Host code includes driver headers (e.g. driver/ascend_hal_define.h) from
+# ${ASCEND_DRIVER_PATH}/kernel/inc. Some machines restrict the system driver
+# directory to root-only (dr-x------), which otherwise surfaces late in the
+# build as "cc1plus: error: ...: Permission denied". Probe up front and pick
+# the first candidate whose kernel/inc is readable as the current user; the
+# shadow dir is a vendored copy of the driver headers kept inside the repo.
+function resolve_ascend_driver_path()
+{
+    local candidates=(
+        "${ASCEND_DRIVER_PATH:-}"
+        "$DEFAULT_ASCEND_DRIVER_PATH"
+        "${PROJECT_ROOT}/ascend_driver_shadow"
+    )
+    local candidate=""
+
+    for candidate in "${candidates[@]}"; do
+        if [[ -n "$candidate" && -r "$candidate/kernel/inc" ]]; then
+            ASCEND_DRIVER_PATH="$candidate"
+            echo "ASCEND_DRIVER_PATH: $ASCEND_DRIVER_PATH"
+            return
+        fi
+    done
+
+    die "No readable driver headers under kernel/inc in: ${candidates[*]}." \
+        "Copy them to ${PROJECT_ROOT}/ascend_driver_shadow/kernel/inc" \
+        "or export ASCEND_DRIVER_PATH."
+}
+
 function setup_ascend_environment()
 {
     local resolved_ascend_home=""
@@ -327,7 +356,7 @@ function setup_ascend_environment()
         -name "ASCConfig.cmake" \
         -type f \
         -print \
-        -quit 2>/dev/null)"
+        -quit 2>/dev/null || true)"
     if [[ -n "$asc_config_cmake" ]]; then
         ASC_CMAKE_DIR="$(dirname "$asc_config_cmake")"
         export CMAKE_PREFIX_PATH="$ASC_CMAKE_DIR${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
@@ -385,6 +414,7 @@ function build_cmake_modules()
         "-DCMAKE_INSTALL_PREFIX=$OUTPUT_DIR"
         "-DASCEND_HOME_PATH=$ASCEND_HOME_PATH"
         "-DASCEND_INCLUDE_DIR=$ASCEND_INCLUDE_DIR"
+        "-DASCEND_DRIVER_PATH=$ASCEND_DRIVER_PATH"
         "-DSOC_VERSION=$CMAKE_SOC_VERSION"
         "-DDEEPEP_IS_A5_BUILD=$DEEPEP_IS_A5_BUILD"
         "-DBUILD_DEEPEP_MODULE=$BUILD_DEEPEP_MODULE"
@@ -511,6 +541,7 @@ function main()
     export DEBUG_MODE
 
     setup_ascend_environment
+    resolve_ascend_driver_path
     mkdir -p "$OUTPUT_DIR"
     echo "Output directory: $OUTPUT_DIR"
     echo "CANN path: $ASCEND_HOME_PATH"
