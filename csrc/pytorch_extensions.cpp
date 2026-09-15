@@ -107,6 +107,16 @@ TORCH_LIBRARY_FRAGMENT(npu, m)
 
 #ifdef SGL_KERNEL_ENABLE_A3_ONLY_OPS
     m.def(
+        "sgl_sparse_flash_attention(Tensor query, Tensor key, Tensor value, "
+        "Tensor sparse_indices, float scale_value, *, Tensor? block_table=None, "
+        "Tensor? actual_seq_lengths_query=None, Tensor? actual_seq_lengths_kv=None, "
+        "Tensor? query_rope=None, Tensor? key_rope=None, int sparse_block_size=1, "
+        "str layout_query='BSND', str layout_kv='BSND', int sparse_mode=3, "
+        "int pre_tokens=9223372036854775807, int next_tokens=9223372036854775807, "
+        "int attention_mode=2, bool return_softmax_lse=False) "
+        "-> (Tensor attention_out, Tensor softmax_max, Tensor softmax_sum)");
+
+    m.def(
         "mla_preprocess(Tensor hiddenState, Tensor gamma0, Tensor beta0, Tensor wdqkv, "
         "Tensor descale0, Tensor gamma1, Tensor beta1, Tensor wuq, "
         "Tensor descale1, Tensor gamma2, Tensor cos, Tensor sin, Tensor wuk,"
@@ -212,6 +222,15 @@ TORCH_LIBRARY_FRAGMENT(npu, m)
     m.def(
         "kv_compress_epilog(Tensor(a!) kv_compress_cache, Tensor x, Tensor slot_mapping, "
         "int quant_group_size, int quant_mode, bool round_scale_flag, int layout) -> ()");
+
+    // The Ascend C side has no optional, so the two optional tensors reach the kernel as raw
+    // pointers that are null when absent. The host compares its own tiling against that same
+    // "present and non-empty" test, so passing a 0-element tensor is equivalent to omitting it.
+    m.def(
+        "swiglu_group_quant(Tensor x, Tensor? topk_weight=None, Tensor? group_index=None, "
+        "ScalarType? dst_type=None, int quant_mode=1, int group_size=128, bool round_scale=False, "
+        "bool ue8m0_scale=False, bool output_origin=False, int group_list_type=0, "
+        "float clamp_value=0.0) -> (Tensor, Tensor, Tensor)");
 #endif
 
 #ifdef BUILD_CATLASS_MODULE
@@ -285,6 +304,8 @@ TORCH_LIBRARY_IMPL(npu, PrivateUse1, m)
     });
 
 #ifdef SGL_KERNEL_ENABLE_A3_ONLY_OPS
+    m.impl("sgl_sparse_flash_attention", TORCH_FN(sglang::npu_kernel::sparse_flash_attention));
+
     m.impl("unidex_copy", TORCH_FN(sglang::npu_kernel::unidex_copy));
 
     m.impl("slot_map_lookup", TORCH_FN(sglang::npu_kernel::slot_map_lookup));
@@ -349,6 +370,10 @@ TORCH_LIBRARY_IMPL(npu, PrivateUse1, m)
 
 #ifdef SGL_KERNEL_ENABLE_A5_ONLY_OPS
     m.impl("kv_compress_epilog", TORCH_FN(sglang::npu_kernel::kv_compress_epilog));
+
+    // The host takes c10::optional directly, so the optionals are registered as-is rather than
+    // being unwrapped to empty tensors here.
+    m.impl("swiglu_group_quant", TORCH_FN(sglang::npu_kernel::swiglu_group_quant));
 #endif
 
 #ifdef BUILD_CATLASS_MODULE

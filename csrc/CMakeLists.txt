@@ -69,6 +69,8 @@ if(SGL_KERNEL_ENABLE_A3_ONLY_OPS)
         ${PROJECT_OP_SRC_BASE}/lightning_indexer/op_host/tiling/lightning_indexer_tiling.cpp
         ${PROJECT_OP_SRC_BASE}/sparse_attn_sharedkv/op_host/sparse_attn_sharedkv.cpp
         ${PROJECT_OP_SRC_BASE}/sparse_attn_sharedkv/op_host/sparse_attn_sharedkv_tiling.cpp
+        ${PROJECT_OP_SRC_BASE}/sparse_flash_attention/op_host/sparse_flash_attention.cpp
+        ${PROJECT_OP_SRC_BASE}/sparse_flash_attention/op_host/tiling/sparse_flash_attention_tiling.cpp
         ${PROJECT_OP_SRC_BASE}/tri_inv/op_host/tri_inv.cpp
         ${PROJECT_OP_SRC_BASE}/recurrent_gated_delta_rule/op_host/recurrent_gated_delta_rule.cpp
         ${PROJECT_OP_SRC_BASE}/causal_conv1d/op_host/causal_conv1d.cpp
@@ -83,6 +85,7 @@ endif()
 if(SGL_KERNEL_ENABLE_A5_ONLY_OPS)
     list(APPEND OP_SRCS
         ${PROJECT_OP_SRC_BASE}/kv_compress_epilog/op_host/kv_compress_epilog.cpp
+        ${PROJECT_OP_SRC_BASE}/swiglu_group_quant/op_host/swiglu_group_quant.cpp
     )
 endif()
 if(BUILD_CATLASS_MODULE)
@@ -165,6 +168,7 @@ endif()
 if(SGL_KERNEL_ENABLE_A5_ONLY_OPS)
     list(APPEND WORKSPACE_KERNEL_SRCS
         ${PROJECT_OP_SRC_BASE}/kv_compress_epilog/op_kernel/kv_compress_epilog.cpp
+        ${PROJECT_OP_SRC_BASE}/swiglu_group_quant/op_kernel/swiglu_group_quant.cpp
     )
 endif()
 
@@ -176,6 +180,7 @@ ascendc_include_directories(workspace_kernel PRIVATE
     ${PROJECT_OP_SRC_BASE}/utils/kernel
     ${PROJECT_OP_SRC_BASE}/sparse_attention_score/op_kernel
     ${PROJECT_OP_SRC_BASE}/kv_compress_epilog/op_kernel
+    ${PROJECT_OP_SRC_BASE}/swiglu_group_quant/op_kernel
 )
 
 ascendc_compile_definitions(workspace_kernel PRIVATE
@@ -243,6 +248,28 @@ if(SGL_KERNEL_ENABLE_A3_ONLY_OPS)
         -cce-vf-remove-membar=false
     )
     list(APPEND A3_ONLY_KERNEL_TARGETS sparse_attn_sharedkv_kernel)
+
+    ascendc_library(sparse_flash_attention_kernel STATIC
+        ${PROJECT_OP_SRC_BASE}/sparse_flash_attention/op_kernel/sparse_flash_attention.cpp
+    )
+    ascendc_include_directories(sparse_flash_attention_kernel PRIVATE
+        ${PROJECT_OP_SRC_BASE}/sparse_flash_attention/op_kernel
+        ${PROJECT_OP_SRC_BASE}/sparse_flash_attention/op_kernel/common
+        ${PROJECT_OP_SRC_BASE}/utils/kernel
+    )
+    ascendc_compile_definitions(sparse_flash_attention_kernel PRIVATE
+        -DHAVE_WORKSPACE
+        -DHAVE_TILING
+    )
+    ascendc_compile_options(sparse_flash_attention_kernel PRIVATE
+        -DASCENDC_DUMP=0
+        --cce-auto-sync=off
+        -Wno-deprecated-declarations
+        # Keep each -mllvm pair grouped; CMake otherwise deduplicates repeated -mllvm flags.
+        "SHELL:-mllvm -cce-vf-remove-membar=false"
+        "SHELL:-mllvm -cce-aicore-hoist-movemask=false"
+    )
+    list(APPEND A3_ONLY_KERNEL_TARGETS sparse_flash_attention_kernel)
 endif()
 
 # create shared library
@@ -281,6 +308,8 @@ target_include_directories(${OP_PLUGIN_NAME} PRIVATE
         ${PROJECT_OP_SRC_BASE}/causal_conv1d/op_host
         ${PROJECT_OP_SRC_BASE}/sparsity_driven_kv_offload/shm_allocator
         ${PROJECT_OP_SRC_BASE}/sparse_attn_sharedkv/op_host
+        ${PROJECT_OP_SRC_BASE}/sparse_flash_attention/op_host
+        ${PROJECT_OP_SRC_BASE}/sparse_flash_attention/op_host/tiling
         ${PROJECT_OP_SRC_BASE}/sparse_attention_score/op_host
         ${PROJECT_OP_SRC_BASE}/sparse_attention_score/op_host/tiling
         ${TORCH_DIR}/include
