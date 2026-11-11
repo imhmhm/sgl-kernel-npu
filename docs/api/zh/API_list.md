@@ -41,6 +41,8 @@
 | [mixed_quant_sparse_flash_mla_metadata_dsl](operators/attention/mixed_quant_sparse_flash_mla_metadata_dsl.md) | `cannbot_dsl` |
 | [batch_matmul_transpose](operators/matmul/batch_matmul_transpose.md) | `ascendc`、`torch_native` |
 | [chunk_gated_delta_rule](operators/attention/gdn/chunk_gated_delta_rule.md) | `ascendc`、`torch_native` |
+| [chunk_gated_delta_rule_npu](operators/attention/gdn/chunk_gated_delta_rule_npu.md) | `triton`、`torch_native` |
+| [mega_chunk_gdn](operators/attention/gdn/mega_chunk_gdn.md) | `ascendc`、`torch_native` |
 | [recurrent_gated_delta_rule](operators/attention/gdn/recurrent_gated_delta_rule.md) | `ascendc`、`torch_native` |
 | [la](operators/attention/laser_attention.md) | `ascendc`（ARCH22）、`torch_native` |
 | [ada_block_sparse_attention](operators/attention/ada_block_sparse_attention.md) | `ascendc`（ARCH22）、`torch_native` |
@@ -102,6 +104,10 @@
 | [kpool_decode_update_and_maybe_write_cache](operators/mem_cache/kpool_decode_update_and_maybe_write_cache.md) | `triton`, `torch_native` |
 | [kpool_write_tail_and_maybe_compress](operators/mem_cache/kpool_write_tail_and_maybe_compress.md) | `triton`, `torch_native` |
 | [scatter_kpool_tail_updates](operators/mem_cache/scatter_kpool_tail_updates.md) | `triton`, `torch_native` |
+| [transfer_kv_per_layer_kv_split_pf_lf](operators/mem_cache/kv_transfer.md) | `ascendc_aiv`, `torch_native` |
+| [transfer_kv_all_layer_kv_split_lf_pf](operators/mem_cache/kv_transfer.md) | `ascendc_aiv`, `torch_native` |
+| [transfer_kv_per_layer_kv_split](operators/mem_cache/kv_transfer.md) | `ascendc_aiv`, `torch_native` |
+| [transfer_kv_all_layer_kv_split](operators/mem_cache/kv_transfer.md) | `ascendc_aiv`, `torch_native` |
 | [situ_and_mul](operators/activation/situ_and_mul.md) | `triton`, `torch_native` |
 | [attn_res_mix_fused](operators/hyper_conn/attn_res_mix_fused.md) | `triton`、`torch_native` |
 | [chunk_local_cumsum](operators/attention/gdn/chunk_local_cumsum.md) | `triton`, `torch_native` |
@@ -142,3 +148,17 @@
 | [fused_infer_attention_score_v2](operators/batch_invariant/fused_infer_attention_score_v2.md) | `batch_invariant_ops` |
 | [cache_loc_assign](operators/mem_cache/cache_locations.md#cache_loc_assign) | `ascendc`, `torch_native` |
 | [cache_loc_update](operators/mem_cache/cache_locations.md#cache_loc_update) | `ascendc`, `torch_native` |
+
+## QSA、PLE 与 hyperconnection
+
+| API | 实现 |
+| --- | --- |
+| [short_conv](operators/mamba/short_conv.md) | `triton`, `torch_native` |
+| [qsa_mqa_packed](operators/indexer/qsa_mqa_packed.md) | `triton`, `torch_native` |
+| [qsa_mqa_paged](operators/indexer/qsa_mqa_paged.md) | `triton`, `torch_native` |
+| [qsa_topk](operators/indexer/qsa_topk.md) | `triton`, `torch_native` |
+| [expand_qsa_blocks](operators/indexer/expand_qsa_blocks.md) | `triton`, `torch_native` |
+| [qsa_sparse_attention](operators/attention/qsa_sparse_attention.md) | `triton`, `torch_native` |
+| [grouped_gemma_rmsnorm](operators/norm/grouped_gemma_rmsnorm.md) | `triton`, `torch_native` |
+| [hc_mix](operators/hyper_conn/hc_mix.md) | `triton`, `torch_native` |
+| [hc_combine](operators/hyper_conn/hc_combine.md) | `triton`, `torch_native` |
