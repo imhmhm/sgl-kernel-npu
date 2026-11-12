@@ -132,11 +132,11 @@ requesting a profile that does not exist for the SDK version is an error.
 `--artifact run` packages only selected repository-owned AICORE/AICPU/HOST
 operators; it does not include third-party dependencies.
 
-Third-party SoC detection uses the local device's `npu-smi` board information:
-`ascend910b` or `ascend910_93` for arch22, and `ascend950` for arch35. It must match
-`--arch-version`. This detection also runs for `--plan` when a dependency has
-operators to build; `--cann-version` changes profile selection, not the installed
-SDK or local SoC.
+Third-party builds select one SoC from `--arch-version`. Architecture `2201`
+uses `ascend910_93` and architecture `3510` uses `ascend950`. Plan previews can
+run without an NPU. With `--plan --cann-version`, the supplied version selects
+the profiles for preview. Actual builds select profiles using the installed
+CANN SDK version.
 
 Dependencies are built before repository-owned operators. Their vendor resources,
 Python bindings and licenses are bundled into the same wheel; users do not need
@@ -144,21 +144,6 @@ to install the dependency `.run` or wheel separately. Successful dependency buil
 are cached under `build/third_party/` and reused when the build fingerprint and
 artifact checksums match. Changes to the profile, build scripts or relevant build
 environment invalidate the cache. `--make-clean` preserves this third-party cache.
-
-### PTO mega GDN
-
-The repository-owned `mega_chunk_gdn` operator uses the standalone CANN build on
-ARCH22. Initialize the existing pinned PTO-ISA submodule before selecting it
-(including `--ops all` on ARCH22):
-
-```bash
-git submodule update --init third_party/pto-isa
-python3 setup.py --arch-version 2201 --ops mega_chunk_gdn --without-third-party
-```
-
-The original PTO computation and Python helper are retained; only the CANN
-launch bridge and framework registration are new. ARCH35 is not supported by
-this native implementation.
 
 ### CANN and host C++ operator declarations
 

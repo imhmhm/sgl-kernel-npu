@@ -29,6 +29,7 @@
 | [assign_cache_op](operators/mem_cache/assign_cache_op.md) | `ascendc`, `torch_native` |
 | [split_qkv_tp_rmsnorm_rope](operators/norm/split_qkv_tp_rmsnorm_rope.md) | `triton`, `torch_native` |
 | [add_example](operators/examples/add_example.md) | `aicpu`, `torch_native` |
+| [elu](operators/examples/elu.md) | `ascendc` (ARCH22), `torch_native` |
 | [compressor_v2](operators/attention/compressor_v2.md) | `cann_ops_transformers_cann920`, `torch_native` |
 | [lightning_indexer_v2](operators/indexer/lightning_indexer_v2.md) | `cann_ops_transformers_cann920`, `torch_native` |
 | [lightning_indexer_v2_metadata](operators/indexer/lightning_indexer_v2_metadata.md) | `cann_ops_transformers_cann920` |
@@ -42,7 +43,6 @@
 | [batch_matmul_transpose](operators/matmul/batch_matmul_transpose.md) | `ascendc`, `torch_native` |
 | [chunk_gated_delta_rule](operators/attention/gdn/chunk_gated_delta_rule.md) | `ascendc`, `torch_native` |
 | [chunk_gated_delta_rule_npu](operators/attention/gdn/chunk_gated_delta_rule_npu.md) | `triton`, `torch_native` |
-| [mega_chunk_gdn](operators/attention/gdn/mega_chunk_gdn.md) | `ascendc`, `torch_native` |
 | [recurrent_gated_delta_rule](operators/attention/gdn/recurrent_gated_delta_rule.md) | `ascendc`, `torch_native` |
 | [la](operators/attention/laser_attention.md) | `ascendc` (ARCH22), `torch_native` |
 | [ada_block_sparse_attention](operators/attention/ada_block_sparse_attention.md) | `ascendc` (ARCH22), `torch_native` |
